@@ -1,0 +1,32 @@
+name: Build CutoWarping (Windows VST3 / .dll)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -A x64
+
+      - name: Build
+        run: cmake --build build --config Release --target CutoWarping_VST3 CutoWarping_Standalone --parallel
+
+      - name: Collect files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item -Recurse build/CutoWarping_artefacts/Release/VST3/CutoWarping.vst3 dist/CutoWarping.vst3
+          Copy-Item build/CutoWarping_artefacts/Release/Standalone/CutoWarping.exe dist/CutoWarping-Standalone.exe
+          Copy-Item README.md dist/README.md
+          Get-ChildItem -Recurse dist | Select-Object FullName, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CutoWarping-Windows-VST3
+          path: dist
